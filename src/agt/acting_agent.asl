@@ -1,6 +1,7 @@
 // acting agent
 
 /* Initial beliefs and rules */
+degrees(Celcius) :- temperature(Celcius)[source(Agent)] & p(Value,Agent).
 
 // The agent has a belief about the location of the W3C Web of Thing (WoT) Thing Description (TD)
 // that describes a Thing of type https://ci.mines-stetienne.fr/kg/ontology#PhantomX
@@ -82,7 +83,58 @@ robot_td("https://raw.githubusercontent.com/Interactions-HSG/example-tds/main/td
 */
 @select_reading_task_0_plan
 +!select_reading(TempReadings, Celcius) : true <-
-    .nth(0, TempReadings, Celcius).
+    .findall(Agent, interaction_trust(_, Agent, _, _), Agents);
+    !iterate(Agents);
+    // Find the maximum trust level and store the value and associated agent
+    .findall(p(Value, Agent), trust_level(Value, Agent), Result);
+    .max(Result, Max);
+    .print("Maximum Trust Level is ", Max);
+    +Max;
+    ?degrees(Celcius);
+    .print("Trustee Celcius is ", Celcius).
+
+
+// Trust Values for each Agent
+@iterate_tv_for_each_agent
++!iterate(Agents) : Agents \== [] <-
+    .nth(0, Agents, CurrentAgent);
+
+	// List of Trust
+    .findall(T, interaction_trust(_, CurrentAgent, _, T), LT);
+
+	// List of Witness
+    .findall(W, witness_reputation(_, CurrentAgent, _, W), LW);
+
+	.print("List of Trust: ", LT);
+    .print("List of Witness: ", LW);
+    .length(LT, LengthOfList);
+    .length(LW, WitnessLengthOfList);
+
+    ?sumup(LW, 0, WitnessSumOfList);
+    ?sumup(LT, 0, SumOfList);
+    ?certified_reputation(certification_agent, CurrentAgent, _, CertifiedTrust);
+    .print("Witness Sum List: ", WitnessSumOfList);
+    
+	// Average Trust Value
+    AvgList = ((SumOfList / LengthOfList) / 3) + (CertifiedTrust / 3) + ((WitnessSumOfList / WitnessLengthOfList) / 3);
+    +trust_level(AvgList, CurrentAgent);
+
+    // Removing the current Agent and continue
+    .delete(CurrentAgent, Agents, NewAgents);
+    !iterate(NewAgents).
+
+// End
++!iterate(Agents) : true <-
+    .print("End").
+
+// Recursive function to sum a list
++?sumup([Head | Tail], Agg, Sum): true <-
+    NewAgg = Head + Agg;
+    ?sumup(Tail, NewAgg, Sum).
++?sumup([], Sum, Sum).
+
+
+
 
 /* 
  * Plan for reacting to the addition of the goal !manifest_temperature
@@ -95,8 +147,8 @@ robot_td("https://raw.githubusercontent.com/Interactions-HSG/example-tds/main/td
 @manifest_temperature_plan 
 +!manifest_temperature : temperature(Celcius) & robot_td(Location) <-
 	.print("I will manifest the temperature: ", Celcius);
-	makeArtifact("covnerter", "tools.Converter", [], ConverterId); // creates a converter artifact
-	convert(Celcius, -20.00, 20.00, 200.00, 830.00, Degrees)[artifact_id(ConverterId)]; // converts Celcius to binary degress based on the input scale
+	makeArtifact("covnerter", "tools.Converter", [], ConverterId);
+	convert(Celcius, -20.00, 20.00, 200.00, 830.00, Degrees)[artifact_id(ConverterId)]; 
 	.print("Temperature Manifesting (moving robotic arm to): ", Degrees);
 
 	/* 
@@ -127,3 +179,6 @@ robot_td("https://raw.githubusercontent.com/Interactions-HSG/example-tds/main/td
 
 /* Import interaction trust ratings */
 { include("inc/interaction_trust_ratings.asl") }
+
+/* Import behavior of rogue agent for broadcastAgents */
+{ include("rogue_agent.asl")}

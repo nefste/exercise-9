@@ -33,9 +33,37 @@ i_have_plans_for(R) :- not (role_goal(R,G) & not has_plan_for(G)).
 @read_temperature_plan
 +!read_temperature : true <-
 	.print("Reading the temperature");
+	//broadcastAgents(Celcius);
 	readCurrentTemperature(47.42, 9.37, Celcius); // reads the current temperature using the artifact
 	.print("Read temperature (Celcius): ", Celcius);
-	.broadcast(tell, temperature(Celcius)). // broadcasts the temperature reading
+	.broadcast(tell, temperature(Celcius));
+	.broadcast(tell, witness_reputation(N, sensing_agent_1, "Trust Me", 1));
+	.broadcast(tell, witness_reputation(N, sensing_agent_2, "Trust Me", 1));
+	.broadcast(tell, witness_reputation(N, sensing_agent_3, "Trust Me", 1));
+	.broadcast(tell, witness_reputation(N, sensing_agent_4, "Trust Me", 1));
+	.broadcast(tell, witness_reputation(N, sensing_agent_5, "Don't trust them", -1));
+	.broadcast(tell, witness_reputation(N, sensing_agent_6, "Don't trust them", -1));
+	.broadcast(tell, witness_reputation(N, sensing_agent_7, "Don't trust them", -1));
+	.broadcast(tell, witness_reputation(N, sensing_agent_8, "Don't trust them", -1));
+	.broadcast(tell, witness_reputation(N, sensing_agent_9, "Don't trust them", -1)). // broadcasts the temperature reading
+
+
+/* 
++!broadcastAgents(Celcius) : true <-
+    .print("Sensing");
+    .my_name(N);
+    !process_group([1,2,3,4], "Trust", 1, N);
+    !process_group([5,6,7,8,9], "No Trust", -1, N);
+    .broadcast(tell, temperature(Celcius)).
+
+
++!process_group([Agent|Tail], TrustLevel, Value, N) : true <-
+    .broadcast(tell, witness_reputation(N, Agent, TrustLevel, Value));
+    !process_group(Tail, TrustLevel, Value, N).
+
++!process_group([], TrustLevel, Value, N) : true.
+*/
+
 
 /* 
  * Plan for reacting to the addition of the belief organization_deployed(OrgName)

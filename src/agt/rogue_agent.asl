@@ -24,8 +24,8 @@ received_readings([]).
   // adds a new plan for reading the temperature that doesn't require contacting the weather station
   // the agent will pick one of the first three temperature readings that have been broadcasted,
   // it will slightly change the reading, and broadcast it
-  .add_plan({ +!read_temperature : received_readings(TempReadings) &
-    .length(TempReadings) >=3
+  .add_plan({ +!read_temperature : received_readings(TempReadings)[source(sensing_agent_9)] &
+    .length(TempReadings) >=3 
     <-
       .print("Reading the temperature");
 
@@ -43,19 +43,37 @@ received_readings([]).
       .broadcast(tell, temperature(Celcius + Deviation)) });
 
   // adds plan for reading temperature in case fewer than 3 readings have been received
-  .add_plan({ +!read_temperature : received_readings(TempReadings) &
+  .add_plan({ +!read_temperature : received_readings(TempReadings)[source(sensing_agent_9)] &
     .length(TempReadings) < 3
     <-
-
-    // waits for 2000 milliseconds and finds all beliefs about received temperature readings
+    .broadcast(tell, witness_reputation(N, sensing_agent_1, "Don't trust them", -1));
+    .broadcast(tell, witness_reputation(N, sensing_agent_2, "Don't trust them", -1));
+    .broadcast(tell, witness_reputation(N, sensing_agent_3, "Don't trust them", -1));
+    .broadcast(tell, witness_reputation(N, sensing_agent_4, "Don't trust them", -1));
+    .broadcast(tell, witness_reputation(N, sensing_agent_5, "Trust Me", 1));
+    .broadcast(tell, witness_reputation(N, sensing_agent_6, "Trust Me", 1));
+    .broadcast(tell, witness_reputation(N, sensing_agent_7, "Trust Me", 1));
+    .broadcast(tell, witness_reputation(N, sensing_agent_8, "Trust Me", 1));
+    .broadcast(tell, witness_reputation(N, sensing_agent_9, "Trust Me", 1));
+    .broadcast(tell, temperature(Celcius)) }).
+  
+  /*
+  .add_plan({ +!read_temperature : true 
+    <-
     .wait(2000);
-    .findall(TempReading, temperature(TempReading)[source(Ag)], NewTempReadings);
+    !read_temperature. })
+ 
++!broadcastAgents(Celcius) : true <-
+    .print("Rogueing");
+    .my_name(N);
+    !process_group([1,2,3,4], "No Trust", -1, N);
+    !process_group([5,6,7,8,9], "Trust", 1, N);
+    .broadcast(tell, temperature(Celcius)).
 
-    // updates the belief about all reaceived temperature readings
-    -+received_readings(NewTempReadings);
 
-    // tries again to "read" the temperature
-    !read_temperature }).
++!process_group([Agent|Tail], TrustLevel, Value, N) : true <-
+    .broadcast(tell, witness_reputation(N, Agent, TrustLevel, Value));
+    !process_group(Tail, TrustLevel, Value, N).
 
-/* Import behavior of sensing agent */
-{ include("sensing_agent.asl")}
++!process_group([], TrustLevel, Value, N) : true.
+*/

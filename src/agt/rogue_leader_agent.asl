@@ -18,11 +18,25 @@
   .remove_plan(LL2);
 
   // adds a new plan for always broadcasting the temperature -2
-  .add_plan({ +!read_temperature : true
+  
+  ({ +!read_temperature : true
     <-
       .print("Reading the temperature");
       .print("Read temperature (Celcious): ", -2);
+      // broadcastAgents(Celcius);
+      .broadcast(tell, witness_reputation(N, sensing_agent_1, "Don't trust them", -1));
+      .broadcast(tell, witness_reputation(N, sensing_agent_2, "Don't trust them", -1));
+      .broadcast(tell, witness_reputation(N, sensing_agent_3, "Don't trust them", -1));
+      .broadcast(tell, witness_reputation(N, sensing_agent_4, "Don't trust them", -1));
+      .broadcast(tell, witness_reputation(N, sensing_agent_5, "Trust Me", 1));
+      .broadcast(tell, witness_reputation(N, sensing_agent_6, "Trust Me", 1));
+      .broadcast(tell, witness_reputation(N, sensing_agent_7, "Trust Me", 1));
+      .broadcast(tell, witness_reputation(N, sensing_agent_8, "Trust Me", 1));
+      .broadcast(tell, witness_reputation(N, sensing_agent_9, "Trust Me", 1));
       .broadcast(tell, temperature(-2))}).
 
 /* Import behavior of sensing agent */
 { include("sensing_agent.asl")}
+
+/* Import behavior of sensing agent for broadcastAgent */
+{ include("rogue_agent.asl")}
